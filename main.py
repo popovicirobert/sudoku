@@ -3,6 +3,7 @@ import sys
 import pygame
 from grid import Grid
 from colors import Colors
+from random import randint
 
 
 class Sudoku:
@@ -82,7 +83,6 @@ class Sudoku:
 
 
     def start(self):
-        self.grid.build_grid()
 
         while True:
             self.update_screen()
