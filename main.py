@@ -44,7 +44,7 @@ class Sudoku:
                 current_cell = self.grid.cell[x][y]
                 if current_cell.collidepoint(mouse_x, mouse_y) == True:
                     return (x, y)
-        return None
+        return (None, None)
 
     def check_events(self):
         for event in pygame.event.get():
@@ -53,13 +53,22 @@ class Sudoku:
                 sys.exit()
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                self.mouse_position = self.get_mouse_cell()
+                (x, y) = self.get_mouse_cell()
 
-                if self.mouse_position[0] != None:
-                    x, y = self.mouse_position
-
+                if x != None:
                     self.grid.color[x][y] = Colors.GREY
-                    self.mouse_pressed = True
+
+                    if self.mouse_pressed == True:
+                        self.grid.color[self.mouse_position[0]][self.mouse_position[1]] = Colors.WHITE
+
+                    if self.grid.color[x][y] == Colors.GREY:
+                        # not the same cell
+                        self.mouse_pressed = True
+                        self.mouse_position = (x, y)
+                    else:
+                        # double click on same cell unselects it
+                        self.mouse_pressed = False
+                        self.mouse_position = (None, None)
 
             elif event.type == pygame.KEYDOWN:
                 if self.mouse_pressed == True:

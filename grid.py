@@ -38,7 +38,7 @@ class Grid:
         screen.blit(text, (x * self.BLOCK_SIZE + self.DIGIT_OFFSET, y * self.BLOCK_SIZE + self.DIGIT_OFFSET))
 
     def add_digit(self, x, y, digit):
-        if digit != '0':
+        if digit.isdigit() and digit != '0':
             self.digit[x][y] = digit
             if not self.check_grid(x, y):
                 self.digit[x][y] = None
