@@ -34,6 +34,7 @@ class Sudoku:
         self.start_button = Button(self.screen, 'Start', 575, 20)
         self.restart_button = Button(self.screen, 'Restart', 575, 90)
         self.solve_button = Button(self.screen, 'Solve', 575, 160)
+        self.quit_button = Button(self.screen, 'Quit', 575, 230)
 
         self.get_patterns()
 
@@ -48,6 +49,7 @@ class Sudoku:
         self.start_button.draw_button()
         self.solve_button.draw_button()
         self.restart_button.draw_button()
+        self.quit_button.draw_button()
 
         pygame.display.update()
 
@@ -91,6 +93,12 @@ class Sudoku:
                         self.grid.add_digit(x, y,
                                             pygame.key.key_code(str(answer[1].digit[x][y])))
 
+    def check_quit_button(self):
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        if self.quit_button.rect.collidepoint(mouse_x, mouse_y) == True:
+            pygame.quit()
+            sys.exit()
+
     def check_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -122,6 +130,8 @@ class Sudoku:
 
                 else:
                     self.check_start_button()
+
+                self.check_quit_button()
 
             elif event.type == pygame.KEYDOWN:
 
