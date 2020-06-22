@@ -2,12 +2,11 @@
 from colors import Colors
 import pygame
 import pygame.font
-from random import randint
 import json
 
 class Grid:
 
-    def __init__(self, BLOCK_SIZE):
+    def __init__(self, BLOCK_SIZE, screen):
         self.color = [[None for y in range(9)] for x in range(9)]
         self.cell = [[None for y in range(9)] for x in range(9)]
         self.digit = [[None for y in range(9)] for x in range(9)]
@@ -17,24 +16,26 @@ class Grid:
         self.DIGIT_OFFSET = self.BLOCK_SIZE // 3
 
         self.get_patterns()
-        self.build_grid(randint(0, self.PATTERN_COUNT - 1))
+        # -1 stands for empty grid
+        self.build_grid(-1)
 
         self.font = pygame.font.SysFont('Arial', 20)
+        self.screen = screen
 
     def get_patterns(self):
         with open('patterns.json', 'r') as fd:
             self.patterns = json.load(fd)
             self.PATTERN_COUNT = len(self.patterns)
 
-    def show_grid(self, screen):
+    def show_grid(self):
         for x in range(9):
             for y in range(9):
-                pygame.draw.rect(screen, self.color[x][y], self.cell[x][y])
+                pygame.draw.rect(self.screen, self.color[x][y], self.cell[x][y])
 
                 if self.digit[x][y] != None:
-                    self.show_digit(screen, x, y)
+                    self.show_digit(self.screen, x, y)
 
-    def build_grid(self, index):
+    def build_grid(self, grid_index):
         for x in range(9):
             for y in range(9):
                 self.cell[x][y] = pygame.Rect(
@@ -43,26 +44,33 @@ class Grid:
 
                 self.color[x][y] = Colors.WHITE
                 self.fixed[x][y] = False
+                self.digit[x][y] = None
 
-                if self.patterns[index][x][y] != None:
-                    self.digit[x][y] = self.patterns[index][x][y]
+                if grid_index != -1 and self.patterns[grid_index][x][y] != None:
+                    self.digit[x][y] = self.patterns[grid_index][x][y]
                     self.fixed[x][y] = True
 
 
 
     def show_digit(self, screen, x, y):
         digit = self.digit[x][y]
-        text = self.font.render(f'{digit}', True, (0, 0, 0))
-        screen.blit(text, (x * self.BLOCK_SIZE + self.DIGIT_OFFSET + 2 * (x // 3) + x - 1,
-                           y * self.BLOCK_SIZE + self.DIGIT_OFFSET + 2 * (y // 3) + y - 1))
+        digit_image = self.font.render(f'{digit}', True, (0, 0, 0))
+        screen.blit(digit_image, (x * self.BLOCK_SIZE + self.DIGIT_OFFSET + 2 * (x // 3) + x - 1,
+                                  y * self.BLOCK_SIZE + self.DIGIT_OFFSET + 2 * (y // 3) + y - 1))
 
-    def add_digit(self, x, y, digit):
-        if digit.isdigit() and digit != '0' and self.fixed[x][y] == False:
-            self.digit[x][y] = digit
-            if self.check_grid(x, y) == False:
+    def add_digit(self, x, y, key):
+        if self.fixed[x][y] == False:
+            digit = pygame.key.name(key)
+            if digit.isdigit() and digit != '0':
+                self.digit[x][y] = digit
+                if self.check_grid(x, y) == False:
+                    self.digit[x][y] = None
+
+                return self.digit[x][y] != None
+
+            elif key == pygame.K_BACKSPACE:
                 self.digit[x][y] = None
-
-            return self.digit[x][y] != None
+                return None
 
         return False
 
@@ -104,3 +112,35 @@ class Grid:
                 if frequence[digit] > 1:
                     return False
         return True
+
+    def solve_grid(self, x = 0, y = 0):
+        self.show_grid()
+        pygame.display.update()
+
+        if x == 0 and y == 9:
+            return [True, self]
+        else:
+
+            next_x, next_y = x + 1, y
+            if x == 8:
+                next_x, next_y = 0, y + 1
+
+            answer = [False, self]
+
+            if self.digit[x][y] != None:
+                answer = self.solve_grid(next_x, next_y)
+            else:
+                for value in range(1, 10):
+                    if (answer[0] == False and
+                        self.add_digit(x, y, pygame.key.key_code(str(value))) == True):
+                        answer = self.solve_grid(next_x, next_y)
+
+                if answer[0] == False and self.fixed[x][y] == False:
+                    self.digit[x][y] = None
+
+            for x in range(9):
+                for y in range(9):
+                    if self.digit[x][y] != answer[1].digit[x][y]:
+                        self.add_digit(x, y, pygame.key.key_code(str(answer[1].digit[x][y])))
+
+            return [answer[0], self]
